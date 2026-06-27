@@ -1,0 +1,150 @@
+// =======================
+// 1. MOTOR VISUAL
+// =======================
+
+if (!window.vx) {
+  window.vx = {}
+}
+
+if (window.vx.raf) {
+  cancelAnimationFrame(window.vx.raf)
+}
+
+if (!window.vx.canvas) {
+  window.vx.canvas = document.createElement('canvas')
+  window.vx.canvas.id = 'strudelCanvas'
+  window.vx.canvas.style =
+    'position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; pointer-events:none;'
+  document.body.appendChild(window.vx.canvas)
+}
+
+window.vx.ctx = window.vx.canvas.getContext('2d')
+window.vx.canvas.width = innerWidth
+window.vx.canvas.height = innerHeight
+window.vx.layers = []
+
+function grid(cells, cols, rows, showGrid, colors) {
+  return {
+    type: "grid",
+    cells: cells,
+    colorsPattern: colors || "cyan",
+    cols: cols,
+    rows: rows,
+    impacts: Array(cols * rows).fill(0),
+    colors: Array(cols * rows).fill(null),
+    decay: 0.93,
+    baseRadius: 18,
+    gain: 80,
+    showGrid: showGrid === true
+  }
+}
+
+function drawGridLayer(layer) {
+  var ctx = window.vx.ctx
+  var canvas = window.vx.canvas
+  var cellW = canvas.width / layer.cols
+  var cellH = canvas.height / layer.rows
+  var total = layer.cols * layer.rows
+
+  for (var i = 0; i < total; i++) {
+    var col = i % layer.cols
+    var row = Math.floor(i / layer.cols)
+    var x = col * cellW
+    var y = row * cellH
+    var cx = x + cellW / 2
+    var cy = y + cellH / 2
+    var impact = layer.impacts[i] || 0
+    var radius = layer.baseRadius + impact * layer.gain
+    var color = layer.colors[i] || "cyan"
+
+    if (layer.showGrid) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)'
+      ctx.lineWidth = 1
+      ctx.strokeRect(x, y, cellW, cellH)
+    }
+
+    ctx.strokeStyle = color
+    ctx.lineWidth = 2 + impact * 6
+    ctx.beginPath()
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+    ctx.stroke()
+
+    layer.impacts[i] = layer.impacts[i] * layer.decay
+  }
+}
+
+function vxLoop() {
+  var ctx = window.vx.ctx
+  var canvas = window.vx.canvas
+
+  ctx.fillStyle = 'rgba(10,10,25,0.2)'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+  for (var i = 0; i < window.vx.layers.length; i++) {
+    drawGridLayer(window.vx.layers[i])
+  }
+
+  window.vx.raf = requestAnimationFrame(vxLoop)
+}
+
+window.vx.raf = requestAnimationFrame(vxLoop)
+
+register('visuals', function (spec, pat) {
+  var layer = spec
+  var id = window.vx.layers.length
+
+  window.vx.layers.push(layer)
+
+  return pat.superimpose(
+    function (x) {
+      return x
+        .n(layer.cells)
+        .color(layer.colorsPattern)
+        .gain(0)
+        .onTrigger(function (e) {
+          var raw = 0
+          var col = null
+
+          if (e.value && e.value.n !== undefined) {
+            raw = e.value.n
+          } else if (e.n !== undefined) {
+            raw = e.n
+          } else if (e.value !== undefined) {
+            raw = e.value
+          } else if (e.note !== undefined) {
+            raw = e.note
+          } else if (e.number !== undefined) {
+            raw = e.number
+          }
+
+          if (e.value && e.value.color !== undefined) {
+            col = e.value.color
+          } else if (e.color !== undefined) {
+            col = e.color
+          }
+
+          var total = layer.cols * layer.rows
+          var cell = Math.floor(Number(raw)) % total
+          if (cell < 0) cell = cell + total
+
+          window.vx.layers[id].impacts[cell] = 1
+          window.vx.layers[id].colors[cell] = col || layer.colorsPattern
+        })
+    }
+  )
+})
+/*
+// exemplos
+t1: s("bd")
+  .visuals(grid("0 1 2 3", 3, 3, false, "red"))
+
+t2: s("~ sd ~ sd")
+  .visuals(grid("4 5 6 7", 2, 2, false, ["#00ffff"]))
+
+t3: s("hh*8")
+  .gain(0.4)
+  .visuals(grid(rand.range(0, 12), 8, 8, false, "yellow cyan magenta"))
+
+t4: s("cp*2")
+  .visuals(grid(sine.range(12, 15), 6, 4, false, ["#ff00aa", "#00ff88", "#4488ff"]))
+*/
