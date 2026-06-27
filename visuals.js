@@ -145,7 +145,7 @@ register('visuals', function (spec, pat) {
   )
 })
 
-
+/*
 // =======================
 // 6. MÚSICA + VISUAIS
 // =======================
@@ -162,3 +162,4 @@ t3: s("hh*8")
 
 t4: s("cp*2")
   .visuals(grid(sine.range(12, 15), 6, 4))
+  */
