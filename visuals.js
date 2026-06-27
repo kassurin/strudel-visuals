@@ -149,20 +149,16 @@ register('visuals', function (spec, pat) {
   )
 })
 
+/*
+// =======================
+// 6. MÚSICA + VISUAIS
+// =======================
 
-// // =======================
-// // 6. MÚSICA + VISUAIS
-// // =======================
+t1: s("bd").visuals(grid("0 1 2 3", 3, 3))
 
-// t1: s("bd")
-//   .visuals(grid("0 1 2 3", 3, 3))
+t2: s("~ sd ~ sd").visuals(grid("4 5 6 7", 2, 2))
 
-// t2: s("~ sd ~ sd")
-//   .visuals(grid("4 5 6 7", 2, 2))
+t3: s("hh*8").gain(0.4).visuals(grid(rand.range(0, 12), 8, 8))
 
-// t3: s("hh*8")
-//   .gain(0.4)
-//   .visuals(grid(rand.range(0, 12), 8, 8))
-
-// t4: s("cp*2")
-//   .visuals(grid(sine.range(12, 15), 6, 4))
+t4: s("cp*2").visuals(grid(sine.range(12, 15), 6, 4))
+  */
