@@ -6,6 +6,10 @@ if (!window.vx) {
   window.vx = {}
 }
 
+if (window.vx.raf) {
+  cancelAnimationFrame(window.vx.raf)
+}
+
 if (!window.vx.canvas) {
   window.vx.canvas = document.createElement('canvas')
   window.vx.canvas.id = 'strudelCanvas'
@@ -17,7 +21,6 @@ if (!window.vx.canvas) {
 window.vx.ctx = window.vx.canvas.getContext('2d')
 window.vx.canvas.width = innerWidth
 window.vx.canvas.height = innerHeight
-
 window.vx.layers = []
 
 
@@ -25,7 +28,7 @@ window.vx.layers = []
 // 2. GRID VISUAL
 // =======================
 
-function grid(cells, cols, rows) {
+function grid(cells, cols, rows, showGrid) {
   return {
     type: "grid",
     cells: cells,
@@ -34,7 +37,10 @@ function grid(cells, cols, rows) {
     impacts: Array(cols * rows).fill(0),
     decay: 0.93,
     baseRadius: 18,
-    gain: 80
+    gain: 80,
+
+    // padrão agora é NÃO mostrar grid
+    showGrid: showGrid === true
   }
 }
 
@@ -62,9 +68,11 @@ function drawGridLayer(layer) {
     var impact = layer.impacts[i] || 0
     var radius = layer.baseRadius + impact * layer.gain
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)'
-    ctx.lineWidth = 1
-    ctx.strokeRect(x, y, cellW, cellH)
+    if (layer.showGrid) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)'
+      ctx.lineWidth = 1
+      ctx.strokeRect(x, y, cellW, cellH)
+    }
 
     ctx.strokeStyle = 'rgba(0,195,255,0.8)'
     ctx.lineWidth = 2 + impact * 6
@@ -81,25 +89,21 @@ function drawGridLayer(layer) {
 // 4. LOOP VISUAL
 // =======================
 
-if (!window.vx.started) {
-  window.vx.started = true
+function vxLoop() {
+  var ctx = window.vx.ctx
+  var canvas = window.vx.canvas
 
-  function vxLoop() {
-    var ctx = window.vx.ctx
-    var canvas = window.vx.canvas
+  ctx.fillStyle = 'rgba(10,10,25,0.2)'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-    ctx.fillStyle = 'rgba(10,10,25,0.2)'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-    for (var i = 0; i < window.vx.layers.length; i++) {
-      drawGridLayer(window.vx.layers[i])
-    }
-
-    requestAnimationFrame(vxLoop)
+  for (var i = 0; i < window.vx.layers.length; i++) {
+    drawGridLayer(window.vx.layers[i])
   }
 
-  requestAnimationFrame(vxLoop)
+  window.vx.raf = requestAnimationFrame(vxLoop)
 }
+
+window.vx.raf = requestAnimationFrame(vxLoop)
 
 
 // =======================
@@ -145,21 +149,20 @@ register('visuals', function (spec, pat) {
   )
 })
 
-/*
-// =======================
-// 6. MÚSICA + VISUAIS
-// =======================
 
-t1: s("bd")
-  .visuals(grid("0 1 2 3", 3, 3))
+// // =======================
+// // 6. MÚSICA + VISUAIS
+// // =======================
 
-t2: s("~ sd ~ sd")
-  .visuals(grid("4 5 6 7", 2, 2))
+// t1: s("bd")
+//   .visuals(grid("0 1 2 3", 3, 3))
 
-t3: s("hh*8")
-  .gain(0.4)
-  .visuals(grid(rand.range(0,12), 8, 8))
+// t2: s("~ sd ~ sd")
+//   .visuals(grid("4 5 6 7", 2, 2))
 
-t4: s("cp*2")
-  .visuals(grid(sine.range(12, 15), 6, 4))
-  */
+// t3: s("hh*8")
+//   .gain(0.4)
+//   .visuals(grid(rand.range(0, 12), 8, 8))
+
+// t4: s("cp*2")
+//   .visuals(grid(sine.range(12, 15), 6, 4))
